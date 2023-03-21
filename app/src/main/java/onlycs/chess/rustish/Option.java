@@ -57,7 +57,8 @@ public class Option<T> {
 
 	// assume T is Option<K> (so this is Option<Option<K>>), return Option<K>, mapping the inner
 	// option to a new option
-	public <K> Option<K> flatten() {
+	@SuppressWarnings("hiding")
+	public <K, T extends Option<K>> Option<K> flatten() {
 		if (isSome) {
 			@SuppressWarnings("unchecked")
 			Option<K> inner = (Option<K>) value;
