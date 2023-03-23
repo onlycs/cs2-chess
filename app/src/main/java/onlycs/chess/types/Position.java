@@ -2,6 +2,9 @@ package onlycs.chess.types;
 
 import onlycs.chess.rustish.Result;
 
+/**
+ * Store for the UI
+ */
 public class Position {
 	public int rank;
 	public int file;
@@ -18,22 +21,20 @@ public class Position {
 		return Result.Ok(new Position(file, rank));
 	}
 
-	public static Result<Position> create(char file, int rank) {
-		if (rank < 1 || rank > 8) {
-			return Result.Err(new Error("Invalid position"));
+	public static Result<Position> parseFEN(String fen) {
+		if (fen.length() != 2) {
+			return Result.Err(new Error("Invalid FEN"));
 		}
 
-		int filei = file - 'a' + 1;
+		// convert e4 to 5, 4
+		int file = fen.charAt(0) - 'a' + 1;
+		int rank = fen.charAt(1) - '0';
 
-		if (filei < 1 || filei > 8) {
-			return Result.Err(new Error("Invalid position"));
-		}
-
-		return Result.Ok(new Position(filei, rank));
+		return Position.create(file, rank);
 	}
 
 	public Position clone() {
-		return new Position(rank, file);
+		return new Position(file, rank);
 	}
 
 	public Result<Position> up(int ct) {
@@ -66,5 +67,9 @@ public class Position {
 
 	public Result<Position> right() {
 		return Position.create(file + 1, rank);
+	}
+
+	public boolean equals(Position other) {
+		return rank == other.rank && file == other.file;
 	}
 }

@@ -1,21 +1,15 @@
 package onlycs.chess.types;
 
 import onlycs.chess.rustish.Result;
-
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import onlycs.chess.pieces.*;
 
 public class Board {
-	/*
-	 * [
-	 * //	 file a  file b  file c
-	 * 		[Square, Square, Square], // rank 8
-	 * 		[Square, Square, Square], // rank 7
-	 * 		...
-	 * ]
-	 */
 	Square[][] board = new Square[8][8];
+	Color turn = Color.White;
 
 	private Board(Square[][] board) {
 		this.board = board;
@@ -165,42 +159,92 @@ public class Board {
 		System.out.println("    a   b   c   d   e   f   g   h ");
 	}
 
-	public Square askFrom(Scanner sc) {
+	public void userMove(Scanner sc) {
 		display();
 
 		System.out.print("Which peice do you want to move (e2)? ");
 
-		String from = sc.nextLine();
+		String fromstr = sc.nextLine();
 
-		int file = from.charAt(0);
-		int rank = from.charAt(1) - '1'; // from 0 to 7
-
-		Square sq = at(Position.create(file, rank).unwrap());
+		Position from = Position.parseFEN(fromstr).unwrap();
 
 		// clear the screen
 		// using both standard ANSI escape sequences and the bluej escape sequence (\f)
 		System.out.print("\033[H\033[2J\f");
 		System.out.flush();
 
-		return sq;
-	}
-
-	public Square askTo(Scanner sc) {
 		display();
 
 		System.out.print("Where do you want to move it to (e4)? ");
 
-		String to = sc.nextLine();
-
-		char file = to.charAt(0);
-		int rank = to.charAt(1) - '1';
+		String tostr = sc.nextLine();
 
 		// clear the screen
 		// using both standard ANSI escape sequences and the bluej escape sequence (\f)
 		System.out.print("\033[H\033[2J\f");
 		System.out.flush();
 
-		return at(Position.create(file, rank).unwrap());
+		Position to = Position.parseFEN(tostr).unwrap();
+
+		ArrayList<Move> moves = getMoves();
+
+		moves = moves.stream().filter(m -> m.from.equals(from) && m.to.equals(to))
+				.collect(Collectors.toCollection(ArrayList::new));
+
+		if (moves.size() == 0) {
+			System.out.println("Invalid move" + moves.size());
+			return;
+		}
+
+		Move move = moves.get(0);
+
+		move(move);
+	}
+
+	public void move(Move move) {
+		Position from = move.from;
+		Position to = move.to;
+
+		Square fromSq = at(from);
+		Square toSq = at(to);
+
+		if (fromSq.getPiece().isNone()) {
+			throw new IllegalArgumentException("No piece at " + from);
+		}
+
+		Piece frompc = fromSq.getPiece().unwrap();
+
+		if (toSq.getPiece().isSome() && toSq.getPiece().unwrap().getColor() == frompc.getColor()) {
+			throw new IllegalArgumentException(
+					"Can't move to " + to + " because there is a piece of the same color there");
+		}
+
+		frompc.setPosition(to);
+
+		toSq.setPiece(frompc);
+		fromSq.removePiece();
+
+		turn = turn.getOpposite();
+	}
+
+	public ArrayList<Move> getMoves() {
+		ArrayList<Move> moves = new ArrayList<Move>();
+
+		for (int ranki = 0; ranki < 8; ranki++) {
+			for (int filei = 0; filei < 8; filei++) {
+				Square sq = board[ranki][filei];
+
+				if (sq.getPiece().isSome()) {
+					Piece pc = sq.getPiece().unwrap();
+
+					if (pc.getColor() == turn) {
+						moves.addAll(pc.getMoves(this));
+					}
+				}
+			}
+		}
+
+		return moves;
 	}
 
 	public Board clone() {

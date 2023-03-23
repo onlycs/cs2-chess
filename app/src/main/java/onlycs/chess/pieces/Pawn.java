@@ -51,7 +51,7 @@ public class Pawn extends Piece {
 					if (board.at(upPos).getPiece().isNone()) {
 						moves.add(new Move(position, upPos));
 
-						if (position.rank == 1) {
+						if (position.rank == 2) {
 							Option<Position> up2 = upPos.up(1).ok();
 
 							if (up2.isSome()) {
