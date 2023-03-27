@@ -20,7 +20,7 @@ dependencies {}
 
 application {
     // Define the main class for the application.
-    mainClass = 'onlycs.chess.Main'
+    mainClass = 'onlycs.tictactoe.Main'
 }
 
 tasks.named('test') {
