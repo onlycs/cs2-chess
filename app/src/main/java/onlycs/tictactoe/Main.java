@@ -3,66 +3,116 @@ package onlycs.tictactoe;
 import java.util.Scanner;
 
 public class Main {
+	static final int SIZE = 3;
+
+	public static final class Player {
+		protected int data;
+
+		public static final Player X() {
+			return new Player(0);
+		}
+
+		public static final Player O() {
+			return new Player(1);
+		}
+
+		public static final Player EMPTY() {
+			return new Player(-1);
+		}
+
+		private Player(int v) {
+			data = v;
+		}
+
+		public boolean equals(Player other) {
+			return other.data == data;
+		}
+
+		public Player other() {
+			return new Player(data == 0 ? 1 : 0);
+		}
+
+		public Player clone() {
+			return new Player(data);
+		}
+	}
+
+	static Player[][] board = new Player[SIZE][SIZE];
+	static char[][] board_disp = new char[SIZE][SIZE];
+	static Player currentPlayer = Player.X();
+
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
 
-		final int SIZE = 3;
-		final char PLAYER_X = 'X';
-		final char PLAYER_O = 'O';
+		initializeBoard();
+		System.out.println("Tic tac toe");
+		printBoard();
 
-		char[][] board = new char[SIZE][SIZE];
-		char currentPlayer = PLAYER_X;
-
-		initializeBoard(board, SIZE);
-		printBoard(board, SIZE);
-
-		while (!isGameOver(board, PLAYER_X, PLAYER_O, SIZE)) {
-			if (currentPlayer == PLAYER_X) {
-				playerMove(sc, board, currentPlayer, SIZE);
+		while (!isGameOver()) {
+			if (currentPlayer.equals(Player.X())) {
+				playerMove(sc);
 			} else {
-				aiMove(board, currentPlayer, SIZE);
-				printBoard(board, SIZE);
+				aiMove();
+				printBoard();
 			}
-			currentPlayer = currentPlayer == PLAYER_X ? PLAYER_O : PLAYER_X;
+			currentPlayer = currentPlayer.other();
 		}
 
-		if (hasPlayerWon(board, PLAYER_X, SIZE)) {
+		if (hasPlayerWon(Player.X())) {
 			System.out.println("Player X won!");
-		} else if (hasPlayerWon(board, PLAYER_O, SIZE)) {
+		} else if (hasPlayerWon(Player.O())) {
 			System.out.println("Player O won!");
 		} else {
 			System.out.println("It's a tie!");
 		}
+
+		printBoard();
 	}
 
-	private static void initializeBoard(char[][] board, int SIZE) {
+	private static void initializeBoard() {
 		for (int i = 0; i < SIZE; i++) {
 			for (int j = 0; j < SIZE; j++) {
-				board[i][j] = '-';
+				board[i][j] = Player.EMPTY();
 			}
 		}
 	}
 
-	private static void printBoard(char[][] board, int SIZE) {
-		System.out.println(" a b c");
+	private static void generateDisplayBoard() {
+		for (int i = 0; i < SIZE; i++) {
+			for (int j = 0; j < SIZE; j++) {
+				Player p = board[i][j];
+
+				if (p.equals(Player.EMPTY())) {
+					board_disp[i][j] = '-';
+				} else if (p.equals(Player.O())) {
+					board_disp[i][j] = 'O';
+				} else {
+					board_disp[i][j] = 'X';
+				}
+			}
+		}
+	}
+
+	private static void printBoard() {
+		generateDisplayBoard();
+		System.out.println("  a b c");
 		for (int i = 0; i < SIZE; i++) {
 			System.out.print((i + 1) + " ");
 			for (int j = 0; j < SIZE; j++) {
-				System.out.print(board[i][j] + " ");
+				System.out.print(board_disp[i][j] + " ");
 			}
 			System.out.println();
 		}
 	}
 
-	private static boolean isGameOver(char[][] board, char PLAYER_X, char PLAYER_O, int SIZE) {
-		return hasPlayerWon(board, PLAYER_X, SIZE) || hasPlayerWon(board, PLAYER_O, SIZE)
-				|| isBoardFull(board, SIZE);
+	private static boolean isGameOver() {
+		return hasPlayerWon(Player.X()) || hasPlayerWon(Player.O()) || isBoardFull();
 	}
 
-	private static boolean isBoardFull(char[][] board, int SIZE) {
+	private static boolean isBoardFull() {
 		for (int i = 0; i < SIZE; i++) {
 			for (int j = 0; j < SIZE; j++) {
-				if (board[i][j] == '-') {
+				if (board[i][j] == Player.EMPTY()) {
 					return false;
 				}
 			}
@@ -71,69 +121,78 @@ public class Main {
 		return true;
 	}
 
-	private static boolean hasPlayerWon(char[][] board, char player, int SIZE) {
+	private static boolean hasPlayerWon(Player player) {
 		// check rows and columns
 		for (int i = 0; i < SIZE; i++) {
-			if (board[i][0] == player && board[i][1] == player && board[i][2] == player) {
+			if (board[i][0].equals(player) && board[i][1].equals(player)
+					&& board[i][2].equals(player)) {
 				return true;
 			}
 
-			if (board[0][i] == player && board[1][i] == player && board[2][i] == player) {
+			if (board[0][i].equals(player) && board[1][i].equals(player)
+					&& board[2][i].equals(player)) {
 				return true;
 			}
 		}
 
 		// check diagonals
-		if (board[0][0] == player && board[1][1] == player && board[2][2] == player) {
+		if (board[0][0].equals(player) && board[1][1].equals(player)
+				&& board[2][2].equals(player)) {
 			return true;
 		}
 
-		if (board[0][2] == player && board[1][1] == player && board[2][0] == player) {
+		if (board[0][2].equals(player) && board[1][1].equals(player)
+				&& board[2][0].equals(player)) {
 			return true;
 		}
 
 		return false;
 	}
 
-	private static void playerMove(Scanner sc, char[][] board, char currentPlayer, int SIZE) {
-		System.out.println("Player " + currentPlayer + " move (e.g. a2):");
+	private static void playerMove(Scanner sc) {
+		System.out.print("Player " + currentPlayer + " move (example: a2) (q to quit): ");
 
 		String move = sc.next();
+
+		if (move.charAt(0) == 'q') {
+			System.out.print("Ok bye!");
+			System.exit(0);
+		}
 
 		int row = move.charAt(1) - '1';
 		int col = move.charAt(0) - 'a';
 
-		if (isValidMove(board, row, col, SIZE)) {
-			board[row][col] = currentPlayer;
+		if (isValidMove(row, col)) {
+			board[row][col] = currentPlayer.clone();
 		} else {
 			System.out.println("Invalid move, try again.");
-			playerMove(sc, board, currentPlayer, SIZE);
+			playerMove(sc);
 		}
 	}
 
-	private static boolean isValidMove(char[][] board, int row, int col, int SIZE) {
+	private static boolean isValidMove(int row, int col) {
 		if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) {
 			return false;
 		}
-		return board[row][col] == '-';
+		return board[row][col] == Player.EMPTY();
 	}
 
-	private static void aiMove(char[][] board, char currentPlayer, int SIZE) {
-		int[] bestMove = findBestMove(board, currentPlayer, 'O', SIZE);
+	private static void aiMove() {
+		int[] bestMove = findBestMove();
 		int row = bestMove[0];
 		int col = bestMove[1];
-		board[row][col] = currentPlayer;
+		board[row][col] = currentPlayer.clone();
 	}
 
-	private static int[] findBestMove(char[][] board, char currentPlayer, char PLAYER_O, int SIZE) {
+	private static int[] findBestMove() {
 		int[] bestMove = new int[] {-1, -1};
 		int bestScore = Integer.MIN_VALUE;
 		for (int i = 0; i < SIZE; i++) {
 			for (int j = 0; j < SIZE; j++) {
-				if (board[i][j] == '-') {
+				if (board[i][j] == Player.EMPTY()) {
 					board[i][j] = currentPlayer;
-					int score = minimax(board, 0, false, 'X', PLAYER_O, SIZE);
-					board[i][j] = '-';
+					int score = minimax(board, 0, false);
+					board[i][j] = Player.EMPTY();
 					if (score > bestScore) {
 						bestScore = score;
 						bestMove[0] = i;
@@ -145,15 +204,14 @@ public class Main {
 		return bestMove;
 	}
 
-	private static int minimax(char[][] board, int currentDepth, boolean isAiTurn, char PLAYER_X,
-			char PLAYER_O, int SIZE) {
-		if (hasPlayerWon(board, PLAYER_X, SIZE)) {
+	private static int minimax(Player[][] board, int currentDepth, boolean isAiTurn) {
+		if (hasPlayerWon(Player.X())) {
 			return -10 + currentDepth;
 		}
-		if (hasPlayerWon(board, PLAYER_O, SIZE)) {
+		if (hasPlayerWon(Player.O())) {
 			return 10 - currentDepth;
 		}
-		if (isBoardFull(board, SIZE)) {
+		if (isBoardFull()) {
 			return 0;
 		}
 		int bestScore;
@@ -161,11 +219,10 @@ public class Main {
 			bestScore = Integer.MIN_VALUE;
 			for (int i = 0; i < SIZE; i++) {
 				for (int j = 0; j < SIZE; j++) {
-					if (board[i][j] == '-') {
-						board[i][j] = PLAYER_O;
-						bestScore = Math.max(bestScore,
-								minimax(board, currentDepth + 1, false, PLAYER_X, PLAYER_O, SIZE));
-						board[i][j] = '-';
+					if (board[i][j] == Player.EMPTY()) {
+						board[i][j] = Player.O();
+						bestScore = Math.max(bestScore, minimax(board, currentDepth + 1, false));
+						board[i][j] = Player.EMPTY();
 					}
 				}
 			}
@@ -174,11 +231,10 @@ public class Main {
 			bestScore = Integer.MAX_VALUE;
 			for (int i = 0; i < SIZE; i++) {
 				for (int j = 0; j < SIZE; j++) {
-					if (board[i][j] == '-') {
-						board[i][j] = PLAYER_X;
-						bestScore = Math.min(bestScore,
-								minimax(board, currentDepth + 1, true, PLAYER_X, PLAYER_O, SIZE));
-						board[i][j] = '-';
+					if (board[i][j] == Player.EMPTY()) {
+						board[i][j] = Player.X();
+						bestScore = Math.min(bestScore, minimax(board, currentDepth + 1, true));
+						board[i][j] = Player.EMPTY();
 					}
 				}
 			}
